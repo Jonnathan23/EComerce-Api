@@ -60,6 +60,7 @@ namespace MyApp.Namespace
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public IActionResult CreateCategory([FromBody] CreateCategoryDto createCategoryDto)
         {
@@ -82,6 +83,72 @@ namespace MyApp.Namespace
             }
 
             return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+        }
+
+        [HttpPatch("{id:int}", Name = nameof(UpdateCategory))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public IActionResult UpdateCategory(int id, [FromBody] CreateCategoryDto updateCategoryDto)
+        {
+            if (!_categoryRepository.CategoryExists(id))
+            {
+                return NotFound($"La categoria con el {id} no existe");
+            }
+
+            if (updateCategoryDto == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (_categoryRepository.CategoryExists(updateCategoryDto.Name))
+            {
+                ModelState.AddModelError("CustomError", "La categoria ya existe");
+                return BadRequest(ModelState);
+            }
+
+            var category = _mapper.Map<Category>(updateCategoryDto);
+            category.Id = id;
+
+            if (!_categoryRepository.UpdateCategory(category))
+            {
+                ModelState.AddModelError("CustomError", $"Algo salio mal al actualizar el registor {category.Name}");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id:int}", Name = nameof(DeleteCategory))]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public IActionResult DeleteCategory(int id)
+        {
+            if (!_categoryRepository.CategoryExists(id))
+            {
+                return NotFound($"La categoria con el {id} no existe");
+            }
+            
+            var category = _categoryRepository.GetCategory(id);
+            if (category == null)
+            {
+                return NotFound($"La categoria con el {id} no existe");
+            }
+
+            if (!_categoryRepository.DeleteCategory(category))
+            {
+                ModelState.AddModelError("CustomError", $"Algo salio mal al eliminar el registor {category.Name}");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
 
 
