@@ -40,9 +40,9 @@ public class CategoryRepository : ICategoryRepository
         return _db.Categories.OrderBy(cat => cat.Name).ToList();
     }
 
-    public Category GetCategory(int id)
+    public Category? GetCategory(int id)
     {
-        return _db.Categories.FirstOrDefault(cat => cat.Id == id) ?? throw new InvalidDataException($"La categoria con el id {id} no existe");
+        return _db.Categories.FirstOrDefault(cat => cat.Id == id);
     }
 
     public bool Save()
